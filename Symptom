@@ -1,0 +1,93 @@
+import discord
+
+# Create an intents object with the required intents
+intents = discord.Intents.default()
+intents.message_content = True  # Add this line to enable message content
+
+# Create the client with the intents object
+client = discord.Client(intents=intents)
+
+# Common diseases and their treatments
+disease_info = {
+    "flu": {
+        "symptoms": ["fever", "cough", "sore throat", "muscle aches", "fatigue"],
+        "treatment": "Rest, stay hydrated, and take over-the-counter medicines such as acetaminophen or ibuprofen.",
+        "medicines": ["Tylenol (acetaminophen)", "Advil (ibuprofen)"]
+    },
+    "migraine": {
+        "symptoms": ["headache", "nausea", "sensitivity to light", "sensitivity to sound"],
+        "treatment": "Rest in a dark, quiet room and take prescribed migraine medications.",
+        "medicines": ["Excedrin Migraine", "Imitrex (sumatriptan)"]
+    },
+    "common cold": {
+        "symptoms": ["runny nose", "sneezing", "cough", "sore throat"],
+        "treatment": "Rest, stay hydrated, and take over-the-counter medicines to relieve symptoms.",
+        "medicines": ["Sudafed (pseudoephedrine)", "Robitussin (guaifenesin)"]
+    },
+    "stomach flu": {
+        "symptoms": ["nausea", "vomiting", "diarrhea", "stomach cramps"],
+        "treatment": "Rest, stay hydrated, and take over-the-counter medicines to relieve symptoms.",
+        "medicines": ["Pepto-Bismol", "Imodium (loperamide)"]
+    },
+    "allergies": {
+        "symptoms": ["sneezing", "itchy eyes", "runny nose", "congestion"],
+        "treatment": "Avoid allergens and take over-the-counter antihistamines.",
+        "medicines": ["Claritin (loratadine)", "Zyrtec (cetirizine)"]
+    }
+}
+
+# Function to assess symptoms
+def assess_symptoms(symptoms):
+    symptoms_list = [symptom.strip() for symptom in symptoms.lower().split(",")]
+    for disease, info in disease_info.items():
+        if all(symptom in info["symptoms"] for symptom in symptoms_list):
+            return disease, info
+    return None, None
+
+# Event for when the bot is ready
+@client.event
+async def on_ready():
+    print(f'We have logged in as {client.user}')
+
+# Event for handling messages
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+
+    if message.content.startswith('!hello'):
+        await message.channel.send('Hello! 👋 How can I assist you today? For a list of commands, type `!help`.')
+
+    elif message.content.startswith('!help'):
+        help_message = (
+            "**🤖 Here are the commands you can use:**\n"
+            "`!hello` - Receive a friendly greeting from the bot.\n"
+            "`!symptoms [description]` - Assess symptoms (e.g., `!symptoms fever, cough, sore throat`)\n"
+        )
+        await message.channel.send(help_message)
+
+    elif message.content.startswith('!symptoms'):
+        symptoms = message.content[len('!symptoms '):].strip()
+        if symptoms:
+            disease, info = assess_symptoms(symptoms)
+            if disease:
+                response = (
+                    f"Based on your symptoms, you might have **{disease}**.\n\n"
+                    f"**Treatment:** {info['treatment']}\n"
+                    f"**Common Medicines:** {', '.join(info['medicines'])}\n\n"
+                    "If symptoms persist, please consult a healthcare provider."
+                )
+            else:
+                response = (
+                    "Your symptoms do not match any common diseases in our database. "
+                    "Please consult a healthcare provider for a more accurate diagnosis."
+                )
+        else:
+            response = (
+                "Please provide a list of symptoms separated by commas. "
+                "Example: `!symptoms fever, cough, sore throat`"
+            )
+        await message.channel.send(response)
+
+# Run the bot with your token
+client.run('YOUR_DISCORD_BOT_TOKEN')
