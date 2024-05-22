@@ -1,0 +1,58 @@
+import discord
+
+# Create an intents object with the required intents
+intents = discord.Intents.default()
+intents.message_content = True  # Add this line to enable message content
+
+# Create the client with the intents object
+client = discord.Client(intents=intents)
+
+# In-memory storage for feedback
+feedback_list = []
+
+# Event for when the bot is ready
+@client.event
+async def on_ready():
+    print(f'We have logged in as {client.user}')
+
+# Event for handling messages
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+
+    if message.content.startswith('!hello'):
+        await message.channel.send('Hello! 👋 How can I assist you today? For a list of commands, type `!help`.')
+
+    elif message.content.startswith('!help'):
+        help_message = (
+            "**🤖 Here are the commands you can use:**\n"
+            "`!hello` - Receive a friendly greeting from the bot.\n"
+            "`!feedback` - Start sharing your feedback about the bot. The bot will prompt you for feedback.\n"
+        )
+        await message.channel.send(help_message)
+
+    elif message.content.startswith('!feedback'):
+        await message.channel.send('I would love to hear your feedback! Please type your feedback below.')
+
+        def check(m):
+            return m.author == message.author and m.channel == message.channel
+
+        feedback_message = await client.wait_for('message', check=check)
+        feedback = feedback_message.content.strip()
+
+        if feedback:
+            feedback_list.append(feedback)
+            response = (
+                "Thank you for your feedback! 🙏 We appreciate your input and will use it to improve our services. "
+                "If you have more suggestions, feel free to share!"
+            )
+        else:
+            response = (
+                "It looks like you didn't provide any feedback. "
+                "Please try again by typing `!feedback` followed by your feedback."
+            )
+        await message.channel.send(response)
+
+# Run the bot with your token
+client.run('YOUR_DISCORD_BOT_TOKEN')
