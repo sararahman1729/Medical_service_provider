@@ -1,0 +1,75 @@
+import discord
+
+# Create an intents object with the required intents
+intents = discord.Intents.default()
+intents.message_content = True  # Add this line to enable message content
+
+# Create the client with the intents object
+client = discord.Client(intents=intents)
+
+# Hospital information
+hospital_info = {
+    "General Hospital": {
+        "type": "General",
+        "location": "123 Main Street, City"
+    },
+    "Children's Hospital": {
+        "type": "Pediatric",
+        "location": "456 Elm Street, Town"
+    },
+    "Veterinary Hospital": {
+        "type": "Veterinary",
+        "location": "789 Oak Street, Village"
+    }
+}
+
+
+# Function to get hospital info
+def get_hospital_info(hospital_name):
+    return hospital_info.get(hospital_name)
+
+
+# Event for when the bot is ready
+@client.event
+async def on_ready():
+    print(f'We have logged in as {client.user}')
+
+
+# Event for handling messages
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+
+    if message.content.startswith('!hello'):
+        await message.channel.send(
+            'Hello! 👋 How can I assist you today? For a list of commands, type `!help`.'
+        )
+
+    elif message.content.startswith('!help'):
+        help_message = (
+            " Hello dear I can show you informations just follow the command.\n"
+            "`!hospital [hospital name]` - Get information about a hospital\n")
+        await message.channel.send(help_message)
+
+    elif message.content.startswith('!symptoms'):
+        # Add code for symptoms assessment here
+        pass
+
+    elif message.content.startswith('!hospital'):
+        hospital_name = message.content[len('!hospital '):].strip()
+        if hospital_name:
+            hospital_info = get_hospital_info(hospital_name)
+            if hospital_info:
+                response = (f"**Hospital Name:** {hospital_name}\n"
+                            f"**Type:** {hospital_info['type']}\n"
+                            f"**Location:** {hospital_info['location']}\n")
+            else:
+                response = "Sorry, I couldn't find information about that hospital."
+        else:
+            response = "Please provide the name of the hospital."
+        await message.channel.send(response)
+
+
+# Replace 'YOUR_DISCORD_BOT_TOKEN' with your actual bot token
+client.run('YOUR_DISCORD_BOT_TOKEN')
