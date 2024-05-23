@@ -1,0 +1,87 @@
+import discord
+
+# Create an intents object with the required intents
+intents = discord.Intents.default()
+intents.message_content = True  # Add this line to enable message content
+
+# Create the client with the intents object
+client = discord.Client(intents=intents)
+
+# Doctor information
+doctor_info = {
+    "Dr. Smith": {
+        "hospital": "General Hospital",
+        "checkup_time": "9:00 AM - 5:00 PM"
+    },
+    "Dr. Johnson": {
+        "hospital": "General Hospital",
+        "checkup_time": "10:00 AM - 6:00 PM"
+    },
+    "Dr. Brown": {
+        "hospital": "Children's Hospital",
+        "checkup_time": "8:00 AM - 4:00 PM"
+    },
+    "Dr. White": {
+        "hospital": "Children's Hospital",
+        "checkup_time": "9:00 AM - 5:00 PM"
+    },
+    "Dr. Green": {
+        "hospital": "Veterinary Hospital",
+        "checkup_time": "11:00 AM - 7:00 PM"
+    },
+    "Dr. Black": {
+        "hospital": "Veterinary Hospital",
+        "checkup_time": "1:00 PM - 9:00 PM"
+    }
+}
+
+# Function to get doctor info
+def get_doctor_info(doctor_name):
+    return doctor_info.get(doctor_name)
+
+# Event for when the bot is ready
+@client.event
+async def on_ready():
+    print(f'We have logged in as {client.user}')
+
+# Event for handling messages
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+
+    if message.content.startswith('!hello'):
+        await message.channel.send(
+            'Hello! 👋 How can I assist you today? For a list of commands, type `!help`.'
+        )
+
+    elif message.content.startswith('!help'):
+        help_message = (
+            "Hello! I can provide you information about doctors. Just use the command:\n"
+            "`!doctor [doctor's name]` - Get information about a doctor\n"
+        )
+        await message.channel.send(help_message)
+
+    elif message.content.startswith('!symptoms'):
+        # Add code for symptoms assessment here
+        pass
+
+    elif message.content.startswith('!doctor'):
+        doctor_name = message.content[len('!doctor '):].strip()
+        if doctor_name:
+            doctor_info = get_doctor_info(doctor_name)
+            if doctor_info:
+                response = (
+                    f"**Doctor Name:** {doctor_name}\n"
+                    f"**Hospital:** {doctor_info['hospital']}\n"
+                    f"**Checkup Time:** {doctor_info['checkup_time']}\n"
+                )
+            else:
+                response = "Sorry, I couldn't find information about that doctor."
+        else:
+            response = "Please provide the name of the doctor."
+        await message.channel.send(response)
+
+
+# Replace 'YOUR_DISCORD_BOT_TOKEN' with your actual bot token
+client.run('YOUR_DISCORD_BOT_TOKEN')
