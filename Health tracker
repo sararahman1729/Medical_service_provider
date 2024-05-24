@@ -1,0 +1,56 @@
+import discord
+from discord.ext import commands
+from collections import defaultdict
+import datetime
+
+# Set up the bot
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents)
+
+# In-memory storage for health metrics
+health_data = defaultdict(lambda: defaultdict(list))
+
+@bot.event
+async def on_ready():
+    print(f'Bot {bot.user} is now online!')
+
+@bot.command(name='log_health')
+async def log_health(ctx, metric: str, value: float):
+    user_id = ctx.author.id
+    timestamp = datetime.datetime.now()
+    health_data[user_id][metric].append((timestamp, value))
+    await ctx.send(f'{ctx.author.mention}, logged {metric} with value {value}.')
+
+@bot.command(name='get_summary')
+async def get_summary(ctx, metric: str, period: str = 'daily'):
+    user_id = ctx.author.id
+    now = datetime.datetime.now()
+    
+    if period == 'daily':
+        start_time = now - datetime.timedelta(days=1)
+    elif period == 'weekly':
+        start_time = now - datetime.timedelta(weeks=1)
+    else:
+        await ctx.send(f'{ctx.author.mention}, unsupported period. Use "daily" or "weekly".')
+        return
+
+    values = [value for timestamp, value in health_data[user_id][metric] if timestamp > start_time]
+    
+    if values:
+        avg_value = sum(values) / len(values)
+        await ctx.send(f'{ctx.author.mention}, average {metric} for the last {period} is {avg_value:.2f}.')
+    else:
+        await ctx.send(f'{ctx.author.mention}, no data for {metric} in the last {period}.')
+
+@bot.command(name='get_metrics')
+async def get_metrics(ctx):
+    user_id = ctx.author.id
+    metrics = list(health_data[user_id].keys())
+    if metrics:
+        await ctx.send(f'{ctx.author.mention}, you are tracking the following metrics: {", ".join(metrics)}.')
+    else:
+        await ctx.send(f'{ctx.author.mention}, you are not tracking any metrics.')
+
+# Replace 'YOUR_BOT_TOKEN' with your actual bot token
+bot.run('YOUR_BOT_TOKEN')
