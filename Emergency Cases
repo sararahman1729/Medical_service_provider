@@ -1,0 +1,114 @@
+import discord
+
+# Constants
+EMERGENCY_INFO = {
+    "heart attack": {
+        "symptoms":
+        ["chest pain", "shortness of breath", "nausea", "lightheadedness"],
+        "suggestion":
+        "Call 911 immediately. Chew and swallow an aspirin unless allergic."
+    },
+    "stroke": {
+        "symptoms": [
+            "sudden numbness", "confusion", "trouble seeing",
+            "trouble walking", "severe headache"
+        ],
+        "suggestion":
+        "Call 911 immediately. Note the time when symptoms first appeared."
+    },
+    "choking": {
+        "symptoms": [
+            "cannot breathe", "cannot talk", "cannot cough",
+            "bluish lips or face"
+        ],
+        "suggestion":
+        "Call 911 immediately. Perform the Heimlich maneuver if trained."
+    },
+    "allergic reaction": {
+        "symptoms": [
+            "swelling of face", "difficulty breathing", "hives",
+            "tightness in throat"
+        ],
+        "suggestion":
+        "Call 911 immediately. Use an epinephrine auto-injector if available."
+    },
+    "severe bleeding": {
+        "symptoms": [
+            "continuous bleeding", "blood spurting", "deep wound",
+            "bleeding does not stop with pressure"
+        ],
+        "suggestion":
+        "Call 911 immediately. Apply direct pressure to the wound and keep the injured person still."
+    }
+}
+
+
+# Function to assess emergency symptoms
+def assess_emergency(symptoms):
+    symptoms_list = [
+        symptom.strip() for symptom in symptoms.lower().split(",")
+    ]
+    for emergency, info in EMERGENCY_INFO.items():
+        if all(symptom in info["symptoms"] for symptom in symptoms_list):
+            return emergency, info
+    return None, None
+
+
+# Create an intents object with the required intents
+intents = discord.Intents.default()
+intents.message_content = True  # Add this line to enable message content
+
+# Create the client with the intents object
+client = discord.Client(intents=intents)
+
+
+# Event for when the bot is ready
+@client.event
+async def on_ready():
+    print(f'We have logged in as {client.user}')
+
+
+# Event for handling messages
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+
+    if message.content.startswith('!hello'):
+        await message.channel.send(
+            'Hello! 👋 How can I assist you today? For a list of commands, type `!help`.'
+        )
+
+    elif message.content.startswith('!help'):
+        help_message = (
+            "**🤖 Here are the commands you can use:**\n"
+            "`!hello` - Receive a friendly greeting from the bot.\n"
+            "`!emergency [description]` - Assess emergency symptoms (e.g., `!emergency chest pain, shortness of breath`)\n"
+        )
+        await message.channel.send(help_message)
+
+    elif message.content.startswith('!emergency'):
+        symptoms = message.content[len('!emergency '):].strip()
+        if symptoms:
+            emergency, info = assess_emergency(symptoms)
+            if emergency:
+                response = (
+                    f"Based on your symptoms, you might be experiencing a **{emergency}**.\n\n"
+                    f"**Suggestion:** {info['suggestion']}\n\n"
+                    "Please follow these instructions and contact emergency services immediately."
+                )
+            else:
+                response = (
+                    "Your symptoms do not match any common emergency cases in our database. "
+                    "Please contact emergency services for immediate assistance."
+                )
+        else:
+            response = (
+                "Please provide a list of symptoms separated by commas. "
+                "Example: `!emergency chest pain, shortness of breath`")
+        await message.channel.send(response)
+
+
+# Run the bot with your token
+client.run(
+    'secret code')
