@@ -1,0 +1,61 @@
+import discord
+from discord.ext import commands, tasks
+from datetime import datetime, timedelta
+import asyncio
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = commands.Bot(command_prefix='!', intents=intents)
+
+# Store user medicine reminders
+user_reminders = {}
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user.name}')
+    check_reminders.start()
+
+@bot.command(name='setreminder')
+async def set_reminder(ctx, time: str, *, medicine: str):
+    """Set a reminder for your medicine. Time format: HH:MM (24-hour)."""
+    user_id = ctx.author.id
+    reminder_time = datetime.strptime(time, "%H:%M").time()
+    if user_id not in user_reminders:
+        user_reminders[user_id] = []
+    user_reminders[user_id].append((reminder_time, medicine))
+    await ctx.send(f'Reminder set for {medicine} at {time}.')
+
+@tasks.loop(seconds=60)
+async def check_reminders():
+    now = datetime.now()
+    current_time = now.time()
+    for user_id, reminders in user_reminders.items():
+        for reminder_time, medicine in reminders:
+            reminder_dt = datetime.combine(now.date(), reminder_time)
+            if reminder_dt <= now < (reminder_dt + timedelta(minutes=1)):
+                user = await bot.fetch_user(user_id)
+                await user.send(f"Time to take your medicine: {medicine}")
+
+@bot.command(name='listreminders')
+async def list_reminders(ctx):
+    """List all reminders for the user."""
+    user_id = ctx.author.id
+    if user_id in user_reminders and user_reminders[user_id]:
+        reminders = user_reminders[user_id]
+        reminder_list = '\n'.join([f"{time.strftime('%H:%M')} - {medicine}" for time, medicine in reminders])
+        await ctx.send(f'Your reminders:\n{reminder_list}')
+    else:
+        await ctx.send('You have no reminders set.')
+
+@bot.command(name='clearreminders')
+async def clear_reminders(ctx):
+    """Clear all reminders for the user."""
+    user_id = ctx.author.id
+    if user_id in user_reminders:
+        user_reminders[user_id] = []
+        await ctx.send('All your reminders have been cleared.')
+    else:
+        await ctx.send('You have no reminders to clear.')
+
+bot.run('YOUR_BOT_TOKEN')
